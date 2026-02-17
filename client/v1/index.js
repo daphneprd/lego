@@ -29,7 +29,8 @@ console.log(MY_FAVORITE_DEALERS[0]);
 // 0. I have 2 favorite lego sets shopping communities stored in MY_FAVORITE_DEALERS variable
 // 1. Create a new variable and assign it the link of the lego set with the highest reduction I can find on these 2 websites
 // 2. Log the variable
-
+var linksetdalmatiens="https://www.dealabs.com/bons-plans/jeu-de-construction-lego-disney-43269-le-chiot-des-101-dalmatiens-via-2875eur-cagnottes-3272724";
+console.log("link to discounted  set :", linksetdalmatiens);
 /**
  * 🧱
  * Easy 😁?
@@ -39,33 +40,73 @@ console.log(MY_FAVORITE_DEALERS[0]);
  * 🧱
  */
 
+
 // 🎯 TODO 2: Number of deals
 // 1. Create a variable and assign it the number of deals
 // 2. Log the variable
+var nbdeal=deals.length;
+console.log("number of deals : ", nbdeal)
 
 // 🎯 TODO 3: Website name
 // 1. Create a variable and assign it the list of shopping community name only
 // 2. Log the variable
 // 3. Log how many shopping communities we have
+const shoppingcomu=[new Set(deals.map(element => element.community))];
+console.log(shoppingcomu);
+console.log("nb of community",shoppingcomu.length);
+
 
 // 🎯 TODO 4: Sort by price
 // 1. Create a function to sort the deals by price
 // 2. Create a variable and assign it the list of sets by price from lowest to highest
 // 3. Log the variable
 
+function sortbyprice(tab){
+  return [...tab].sort((a,b)=>a.price-b.price);
+}
+var deal_by_price=sortbyprice(deals);
+console.log("deals by price : ", deal_by_price);
+
+
 // 🎯 TODO 5: Sort by date
 // 1. Create a function to sort the deals by date
 // 2. Create a variable and assign it the list of deals by date from recent to old
 // 3. Log the variable
+function sort_by_date(tab){
+  return [...tab].sort((a,b)=>a.published-b.published);
+}
+var deals_by_date=sort_by_date(deals);
+console.log("deals by date : ",deals_by_date)
+
+// function sort_by generique 
+function sort_by(item, property){
+  
+  if(property in item == false){
+      console.log(property+" not in "+item)
+
+  }else{
+    return [...item].sort((a,b)=>a.property-b.property);
+  }
+}
 
 // 🎯 TODO 6: Filter a specific percentage discount range
 // 1. Filter the list of deals between 50% and 75%
 // 2. Log the list
+const deals_specific_discount=deals.filter(element => element.discount>=50 && element.discount<=75);
+console.log("specified dicount : ", deals_specific_discount)
 
 // 🎯 TODO 7: Average percentage discount
 // 1. Determine the average percentage discount of the deals
 // 2. Log the average
-
+function sum_discount(tab){
+  var sum=0;
+  for(var i=0;i<tab.length;i++){
+     sum+=tab[i].discount; 
+  }
+  return sum;
+}
+var discount_average=sum_discount(deals)/deals.length;
+console.log("average disocunt", discount_average);
 /**
  * 🏎
  * We are almost done with the `deals` variable
@@ -88,10 +129,50 @@ console.log(MY_FAVORITE_DEALERS[0]);
 //
 // 2. Log the variable
 // 3. Log the number of deals by community
+const communities={};
+for (const elemt of deals ){
+  const community_name = elemt.community;
+
+  if (!communities[community_name]) {
+    communities[community_name] = [];
+  }
+
+  communities[community_name].push(elemt);
+}
+
+console.log('communities : ',communities);
+for(const community_name in communities)
+{
+  console.log("community: ",community_name,communities[community_name]);
+  console.log("nb of deals" +communities[community_name].length);
+}
+
 
 // 🎯 TODO 9: Sort by price for each community
 // 1. For each community, sort the deals by discount price, from highest to lowest
 // 2. Log the sort
+
+function sort_by_desc(items, property) {
+  if (!items || items.length === 0) {
+    console.log("Empty array or invalid items");
+    return [];
+  }
+
+  if (!(property in items[0])) {
+    console.log(property + " not in items");
+    return items;
+  }
+
+  return [...items].sort((a, b) => b.property - a.property);
+}
+console.log("community sorted by discount price desc: ");
+for(const community_name in communities)
+{
+  sort_by_desc(communities[community_name],communities[community_name].price);
+  console.log("community: ",community_name,communities[community_name]);
+  
+}
+
 
 // 🎯 TODO 10: Sort by date for each community
 // 1. For each set, sort the deals by date, from old to recent
