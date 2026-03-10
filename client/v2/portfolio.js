@@ -131,12 +131,19 @@ const renderIndicators = pagination => {
 };
 
 const render = (deals, pagination) => {
-  renderDeals(deals);
+  let filteredDeals = deals;
+
+  if (checkboxBestDiscount.checked) {
+    filteredDeals = filterBestDiscount(deals);
+  }
+  if (checkboxBestComments.checked) {
+    filteredDeals = filterBestComments(filteredDeals);
+  }
+  renderDeals(filteredDeals);
   renderPagination(pagination);
   renderIndicators(pagination);
-  renderLegoSetIds(deals)
+  renderLegoSetIds(filteredDeals);
 };
-
 /**
  * Declaration of all Listeners
  */
@@ -155,5 +162,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
 
   setCurrentDeals(deals);
+  render(currentDeals, currentPagination);
+});
+// Select the page to display
+selectPage.addEventListener('change', async (event) => {
+  const page = parseInt(event.target.value);
+  const size = currentPagination.size;
+
+  const deals = await fetchDeals(page, size);
+
+  setCurrentDeals(deals);
+  render(currentDeals, currentPagination);
+});
+
+// Select  discount above 25%
+const checkboxBestDiscount = document.querySelector('#best-discount');
+const filterBestDiscount = deals => {
+  return deals.filter(deal => deal.discount >= 25);
+};
+checkboxBestDiscount.addEventListener('change', () => {
+  render(currentDeals, currentPagination);
+});
+
+// Filter by nb of comments above 15
+const checkboxBestComments = document.querySelector('#most-commented');
+const filterBestComments = deals => {
+  return deals.filter(deal => deal.comments >= 15);
+};
+checkboxBestComments.addEventListener('change', () => {
   render(currentDeals, currentPagination);
 });
