@@ -1,83 +1,111 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+        header {
+            background-image: url('image.jpg');
+            background-size: cover;
+            background-position: center;
+            
+        }
+    </style>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>🧱 Lego | Predictability of a lego set deal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lego | Predictability of a lego set deal</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>Lego</h1>
-    <section id="options">
-      <div id="show">
-        <label for="show-select">Show:</label>
-        <select name="show" id="show-select">
-          <option value="6">6</option>
-          <option value="12">12</option>
-          <option value="24">24</option>
-        </select>
-      </div>
-      <div id="page">
-        <label for="page-select">Go to page:</label>
-        <select name="page" id="page-select"> </select>
-      </div>
-      <div id="filters">
-        <label>
-          <input type="checkbox" id="best-discount">
-          Best discount (>25%)
-        </label>
-        <label>
-          <input type="checkbox" id="most-commented">
-          Most commented(>15 comments)
-        </label>
-        <label>
-          <input type="checkbox" id="hot-deals">
-          Hot deals
-        </label>
-      </div>
-      <div id="sort">
-        <label for="sort-select">Sort:</label>
-        <select name="sort" id="sort-select">
-          <option value="price-asc">Cheaper</option>
-          <option value="price-desc">Expensive</option>
-          <option value="date-asc">Recently published</option>
-          <option value="date-desc">Anciently published</option>
-        </select>
-      </div>
-    </section>
-    <section id="lego">
-      <h2>Lego sets</h2>
-      <div>
-        <label>Lego set id:</label>
-        <select id="lego-set-id-select"></select> 
-      </div>
-    </section>
-    <section id="indicators">
-      <h2>Indicators</h2>
-      <div>
-        <span>Number of deals</span>
-        <span id="nbDeals">0</span>
-      </div>
-      <div>
-        <span>Number of sales</span>
-        <span id="nbSales">0</span>
-      </div>
-      <div>
-        <span>p5 sales price value</span>
-        <span>0</span>
-      </div>
-      <div>
-        <span>p25 sales price value</span>
-        <span>0</span>
-      </div>
-      <div>
-        <span>p50 sales price value</span>
-        <span>0</span>
-      </div>
-      <div>
-        <span>Lifetime value</span>
-        <span>10 days</span>
-      </div>
-    </section>
-    <section id="deals"></section>
+    <div class="app-container">
+      <aside class="sidebar">
+        <h2>Lego Deals</h2>
+
+        
+        <div class="sidebar-section">
+          <h3>Display</h3>
+          <label for="show-select">Deals per page:</label>
+          <select name="show" id="show-select">
+            <option value="6">6 deals</option>
+            <option value="12">12 deals</option>
+            <option value="24">24 deals</option>
+          </select>
+          <label for="page-select" style="margin-top: 10px;">Page:</label>
+          <select name="page" id="page-select"></select>
+        </div>
+        <div class="sidebar-section">
+          <h3>Filters</h3>
+          <label>
+            <input type="checkbox" id="best-discount">
+            Best discount (>25%)
+          </label>
+          <label>
+            <input type="checkbox" id="most-commented">
+            Most commented (>15)
+          </label>
+          <label>
+            <input type="checkbox" id="hot-deals">
+            Hot deals
+          </label>
+          <label>
+            <input type="checkbox" id="favorites-only">
+            Favorites only
+          </label>
+        </div>
+        <div class="sidebar-section">
+          <h3>Sort by</h3>
+          <select name="sort" id="sort-select">
+            <option value="price-asc"> Price (Low to High)</option>
+            <option value="price-desc"> Price (High to Low)</option>
+            <option value="date-asc">Recently published</option>
+            <option value="date-desc"> Oldest published</option>
+          </select>
+        </div>
+        <div class="sidebar-section">
+          <h3>Lego Sets</h3>
+          <label for="lego-set-id-select">View sales for set:</label>
+          <select id="lego-set-id-select"></select>
+        </div>
+      </aside>
+      <main class="main-content">
+        <section id="indicators">
+          <h2>Indicators</h2>
+          <div>
+            <span>Deals</span>
+            <span id="nbDeals">0</span>
+          </div>
+          <div>
+            <span>Vinted Sales</span>
+            <span id="nbSales">0</span>
+          </div>
+          <div>
+            <span>P5 Price</span>
+            <span id="p5Price">0</span>
+          </div>
+          <div>
+            <span>P25 Price</span>
+            <span id="p25Price">0</span>
+          </div>
+          <div>
+            <span>P50 Price</span>
+            <span id="p50Price">0</span>
+          </div>
+          <div>
+            <span>Avg Price</span>
+            <span id="avgPrice">0</span>
+          </div>
+          <div>
+            <span>Lifetime</span>
+            <span id="lifetimeValue">-</span>
+          </div>
+        </section>
+
+
+        <section id="sales"></section>
+
+
+        <section id="deals"></section>
+      </main>
+    </div>
+
     <script type="text/javascript" charset="UTF-8" src="utils.js"></script>
     <script type="text/javascript" charset="UTF-8" src="portfolio.js"></script>
   </body>
