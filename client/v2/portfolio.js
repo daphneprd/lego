@@ -74,7 +74,8 @@ const toggleFavorite = (uuid) => {
 const fetchDeals = async (page = 1, size = 6) => {
   try {
     const response = await fetch(
-      `https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`
+      //`https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`
+      `http://localhost:3000/deals?page=${page}&size=${size}`
     );
     const body = await response.json();
 
@@ -152,12 +153,31 @@ const renderPagination = pagination => {
  * @param  {Array} lego set ids
  */
 const renderLegoSetIds = deals => {
-  const ids = getIdsFromDeals(deals);
-  const options = ids.map(id => 
-    `<option value="${id}">${id}</option>`
-  ).join('');
+  const ids = [...new Set(getIdsFromDeals(deals).filter(id => id != null && id !== ''))];
+  ids.sort((a, b) => String(a).localeCompare(String(b), undefined, {numeric: true}));
+
+  const options = ['<option value="">Choisir un set</option>',
+    ...ids.map(id => `<option value="${id}">${id}</option>`) 
+  ].join('');
 
   selectLegoSetIds.innerHTML = options;
+};
+
+const loadSalesForSelectedSet = async () => {
+  const legoId = selectLegoSetIds.value;  console.log('Loading sales for:', legoId);
+  if (!legoId) {
+    sectionSales.innerHTML = '<h2>Vinted Sales</h2><p>Choisissez un set pour afficher les ventes.</p>';
+    spanNbSales.innerHTML = '0';
+    spanP5Price.innerHTML = '0';
+    spanP25Price.innerHTML = '0';
+    spanP50Price.innerHTML = '0';
+    spanAvgPrice.innerHTML = '0';
+    spanLifetimeValue.innerHTML = '-';
+    return;
+  }
+
+  const sales = await fetchSales(legoId);
+  renderSales(sales);
 };
 
 /**
@@ -212,6 +232,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setCurrentDeals(deals);
   render(currentDeals, currentPagination);
+
+  const firstRealOption = selectLegoSetIds.options[1];
+  if (firstRealOption) {
+    selectLegoSetIds.value = firstRealOption.value; // forcer la valeur
+    await loadSalesForSelectedSet();
+  }  /*
+  // Automatically load sales for the first selected set (or placeholder)
+  if (selectLegoSetIds.options.length > 1) {
+    selectLegoSetIds.selectedIndex = 1; // first real set
+    await loadSalesForSelectedSet();
+  } else {
+    await loadSalesForSelectedSet();
+  }*/
 });
 // Select the page to display
 selectPage.addEventListener('change', async (event) => {
@@ -284,11 +317,12 @@ const spanLifetimeValue = document.querySelector('#lifetimeValue');
 const sectionSales = document.querySelector('#sales');
 
 /**
- * Render Vinted sales table
+ * Render Vinted sales table with pagination (20 rows initially, show more button)
  * @param {Array} sales - sales data
  */
 const renderSalesTable = (sales) => {
   console.log('renderSalesTable called with:', sales);
+  console.log('Raw sales data:', JSON.stringify(sales, null, 2));
 
   if (!sales || sales.length === 0) {
     sectionSales.innerHTML = '<h2>Vinted Sales</h2><p>No sales found</p>';
@@ -296,43 +330,76 @@ const renderSalesTable = (sales) => {
   }
 
   try {
-    const rowsTemplate = sales
-      .map(sale => {
+    const ROWS_PER_PAGE = 20;
+    const totalRows = sales.length;
+    const showMore = totalRows > ROWS_PER_PAGE;
+    
+    // Build all rows but mark first 20 as visible
+    const allRowsTemplate = sales
+      .map((sale, index) => {
         const dateStr = sale.published ? new Date(sale.published).toLocaleDateString() : 'N/A';
         const price = sale.price || 'N/A';
         const currency = sale.currency || 'EUR';
         const link = sale.link || '#';
+        const title = sale.title || 'N/A';
+        const isHidden = index >= ROWS_PER_PAGE ? ' style="display: none;" class="hidden-row"' : '';
 
         return `
-        <tr>
+        <tr${isHidden}>
+          <td>${title}</td>
           <td>${dateStr}</td>
-          <td>${price}</td>
-          <td>${currency}</td>
-          <td><a href="${link}" target="_blank">View</a></td>
+          <td>${price} ${currency}</td>
+          <td><a href="${link}" target="_blank" style="color: #007bff; text-decoration: none;">View on Vinted</a></td>
         </tr>
       `;
       })
       .join('');
 
+    const showMoreBtn = showMore ? `
+      <button id="show-more-sales-btn" style="
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: #9B8EC7;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+      ">Show More (${totalRows - ROWS_PER_PAGE} more)</button>
+    ` : '';
+
     const template = `
-      <h2>Vinted Sales</h2>
-      <table>
+      <h2>Vinted Sales (${sales.length} items)</h2>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Price</th>
-            <th>Currency</th>
-            <th>Link</th>
+          <tr style="background-color: #f5f5f5; border-bottom: 2px solid #ddd;">
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Title</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Date</th>
+            <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Price</th>
+            <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Link</th>
           </tr>
         </thead>
         <tbody>
-          ${rowsTemplate}
+          ${allRowsTemplate}
         </tbody>
       </table>
+      ${showMoreBtn}
     `;
 
     sectionSales.innerHTML = template;
-    console.log('Sales table rendered successfully');
+    
+    // Add click handler for show more button
+    if (showMore) {
+      const btn = document.getElementById('show-more-sales-btn');
+      btn.addEventListener('click', () => {
+        const hiddenRows = sectionSales.querySelectorAll('.hidden-row');
+        hiddenRows.forEach(row => row.style.display = '');
+        btn.style.display = 'none';
+      });
+    }
+    
+    console.log('Sales table rendered successfully with', sales.length, 'items');
   } catch (error) {
     console.error('Error rendering sales table:', error);
     sectionSales.innerHTML = '<h2>Vinted Sales</h2><p>Error displaying sales</p>';
@@ -362,10 +429,17 @@ const calculatePercentile = (values, p) => {
  * @param {Array} sales - sales data
  * @returns {Number} average price
  */
+/*
 const calculateAverage = (sales) => {
   if (sales.length === 0) return 0;
   const sum = sales.reduce((acc, sale) => acc + sale.price, 0);
   return (sum / sales.length).toFixed(2);
+};*/
+const calculateAverage = (sales) => {
+  const validSales = sales.filter(s => s.price != null && !isNaN(s.price));
+  if (validSales.length === 0) return 0;
+  const sum = validSales.reduce((acc, sale) => acc + parseFloat(sale.price), 0);
+  return (sum / validSales.length).toFixed(2);
 };
 
 /**
@@ -389,29 +463,39 @@ const calculateLifetimeValue = (sales) => {
 const fetchSales = async (id) => {
   try {
     const response = await fetch(
-      `https://lego-api-blue.vercel.app/sales?id=${id}`
+      `http://localhost:3000/api/vinted?id=${id}`
     );
 
     const body = await response.json();
     console.log('Sales API Response:', body);
-    console.log('body.data type:', typeof body.data);
-    console.log('body.data:', body.data);
 
-    if (body.success !== true) {
-      console.error('API Error:', body);
-      return [];
+    // Handle direct array response (from server returning sales directly)
+    if (Array.isArray(body)) {
+      console.log('Direct array response - using as-is');
+      return body;
+    }
+
+    // Handle wrapped response {data: [...]}
+    if (body.data && Array.isArray(body.data)) {
+      console.log('Wrapped response with data field - extracting data array');
+      return body.data;
+    }
+
+    // Handle wrapped response {success: true, data: [...]}
+    if (body.success === true && Array.isArray(body.data)) {
+      console.log('Wrapped response with success - extracting data');
+      return body.data;
     }
 
     // Handle if body.data is an object (convert to array)
-    let salesData = body.data;
-    if (typeof salesData === 'object' && !Array.isArray(salesData)) {
-      // If it's an object, try to get values as array
-      salesData = Object.values(salesData);
+    if (body.data && typeof body.data === 'object' && !Array.isArray(body.data)) {
+      const salesData = Object.values(body.data);
       console.log('Converted object to array:', salesData);
+      return salesData;
     }
 
-    console.log('Final Sales data:', salesData);
-    return Array.isArray(salesData) ? salesData : [];
+    console.error('Unexpected API response format:', body);
+    return [];
   } catch (error) {
     console.error('Fetch Error:', error);
     return [];
@@ -423,6 +507,8 @@ const renderSales = sales => {
     sales = [];
   }
 
+  console.log('renderSales called with:', sales);
+  console.log('First sale:', sales[0]);
   spanNbSales.innerHTML = sales.length;
 
   if (sales.length === 0) {
@@ -435,7 +521,11 @@ const renderSales = sales => {
     return;
   }
 
-  const prices = sales.map(sale => sale.price);
+  //const prices = sales.map(sale => sale.price);
+  const prices = sales
+  .map(sale => parseFloat(sale.price))
+  .filter(p => !isNaN(p)); //  ignore les undefined/null
+  console.log('Extracted prices:', prices);
   const p5 = calculatePercentile(prices, 5).toFixed(2);
   const p25 = calculatePercentile(prices, 25).toFixed(2);
   const p50 = calculatePercentile(prices, 50).toFixed(2);
@@ -450,13 +540,7 @@ const renderSales = sales => {
 
   renderSalesTable(sales);
 };
-//const selectLegoSetIds = document.querySelector('#lego-set-id-select');
-selectLegoSetIds.addEventListener('change', async (event) => {
-
-  const legoId = event.target.value;
-
-  const sales = await fetchSales(legoId);
-
-  renderSales(sales);
-
+// Select change event uses shared loader to avoid duplicate logic
+selectLegoSetIds.addEventListener('change', async () => {
+  await loadSalesForSelectedSet();
 });
